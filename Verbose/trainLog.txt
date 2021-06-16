@@ -1,0 +1,1073 @@
+starting worker pid=15124 on localhost:11933 at 09:50:01.579
+starting worker pid=3452 on localhost:11933 at 09:50:01.580
+starting worker pid=19672 on localhost:11933 at 09:50:01.585
+starting worker pid=11188 on localhost:11933 at 09:50:01.590
+starting worker pid=17356 on localhost:11933 at 09:50:01.593
+starting worker pid=7760 on localhost:11933 at 09:50:01.596
+Loading required package: caret
+Loading required package: lattice
+Loading required package: ggplot2
+Loading required package: caret
+Loading required package: lattice
+Loading required package: caret
+Loading required package: ggplot2
+Loading required package: lattice
+Loading required package: ggplot2
+Loading required package: caret
+Loading required package: lattice
+Loading required package: ggplot2
+Loading required package: caret
+Loading required package: lattice
+Loading required package: caret
+Loading required package: lattice
+Loading required package: ggplot2
+Loading required package: ggplot2
+loaded caret and set parent environment
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+loaded caret and set parent environment
+loaded caret and set parent environment
+Loading required package: dplyr
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+loaded caret and set parent environment
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+loaded caret and set parent environment
+Loading required package: dplyr
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+loaded caret and set parent environment
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+Loading required package: Matrix
+Loading required package: Matrix
+loaded caret and set parent environment
+Loading required package: Matrix
+Loaded glmnet 4.1-1
+Loaded glmnet 4.1-1
+loaded caret and set parent environment
+loaded caret and set parent environment
+Loading required package: Matrix
+Loading required package: Matrix
+loaded caret and set parent environment
+Loading required package: Matrix
+Loaded glmnet 4.1-1
+Loaded glmnet 4.1-1
+Loaded glmnet 4.1-1
+Warning message:
+glm.fit: fitted probabilities numerically 0 or 1 occurred 
+starting worker pid=3840 on localhost:11188 at 09:54:00.886
+
+starting worker pid=16060 on localhost:11188 at 09:54:00.898
+starting worker pid=240 on localhost:11188 at 09:54:00.900
+starting worker pid=21912 on localhost:11188 at 09:54:00.901
+starting worker pid=16160 on localhost:11188 at 09:54:00.908
+Loading required package: caret
+Loading required package: lattice
+Loading required package: caret
+Loading required package: ggplot2
+Loading required package: lattice
+Loading required package: caret
+Loading required package: ggplot2
+Loading required package: lattice
+Loading required package: ggplot2
+Loading required package: caret
+Loading required package: lattice
+Loading required package: ggplot2
+Loading required package: caret
+Loading required package: lattice
+Loading required package: ggplot2
+Loading required package: caret
+Loading required package: lattice
+Loading required package: ggplot2
+loaded caret and set parent environment
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+loaded caret and set parent environment
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+loaded caret and set parent environment
+loaded caret and set parent environment
+Loading required package: dplyr
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+loaded caret and set parent environment
+Loading required package: dplyr
+loaded caret and set parent environment
+
+Attaching package: 'dplyr'
+
+Loading required package: dplyr
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+Loading required package: Matrix
+Loading required package: Matrix
+loaded caret and set parent environment
+loaded caret and set parent environment
+Loading required package: Matrix
+Loading required package: Matrix
+Loaded glmnet 4.1-1
+Loaded glmnet 4.1-1
+Loaded glmnet 4.1-1
+Loaded glmnet 4.1-1
+loaded caret and set parent environment
+loaded caret and set parent environment
+Loading required package: Matrix
+Loading required package: Matrix
+Loaded glmnet 4.1-1
+Loaded glmnet 4.1-1
+loaded caret and set parent environment
+loaded caret and set parent environment
+naivebayes 0.9.7 loaded
+loaded caret and set parent environment
+naivebayes 0.9.7 loaded
+loaded caret and set parent environment
+loaded caret and set parent environment
+naivebayes 0.9.7 loaded
+naivebayes 0.9.7 loaded
+naivebayes 0.9.7 loaded
+loaded caret and set parent environment
+naivebayes 0.9.7 loaded
+loaded caret and set parent environment
+loaded caret and set parent environment
+randomForest 4.6-14
+Type rfNews() to see new features/changes/bug fixes.
+loaded caret and set parent environment
+loaded caret and set parent environment
+randomForest 4.6-14
+Type rfNews() to see new features/changes/bug fixes.
+
+Attaching package: 'randomForest'
+
+The following object is masked from 'package:dplyr':
+
+    combine
+
+The following object is masked from 'package:ggplot2':
+
+    margin
+
+loaded caret and set parent environment
+
+Attaching package: 'randomForest'
+
+The following object is masked from 'package:dplyr':
+
+    combine
+
+The following object is masked from 'package:ggplot2':
+
+    margin
+
+randomForest 4.6-14
+Type rfNews() to see new features/changes/bug fixes.
+randomForest 4.6-14
+Type rfNews() to see new features/changes/bug fixes.
+
+Attaching package: 'randomForest'
+
+randomForest 4.6-14
+The following object is masked from 'package:dplyr':
+
+    combine
+
+Type rfNews() to see new features/changes/bug fixes.
+The following object is masked from 'package:ggplot2':
+
+    margin
+
+The following object is masked from 'package:dplyr':
+
+    combine
+
+The following object is masked from 'package:ggplot2':
+
+    margin
+
+
+Attaching package: 'randomForest'
+
+The following object is masked from 'package:dplyr':
+
+    combine
+
+The following object is masked from 'package:ggplot2':
+
+    margin
+
+loaded caret and set parent environment
+randomForest 4.6-14
+Type rfNews() to see new features/changes/bug fixes.
+
+Attaching package: 'randomForest'
+
+The following object is masked from 'package:dplyr':
+
+    combine
+
+The following object is masked from 'package:ggplot2':
+
+    margin
+
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+loaded caret and set parent environment
+
+Attaching package: 'kernlab'
+
+The following object is masked from 'package:ggplot2':
+
+    alpha
+
+
+Attaching package: 'kernlab'
+
+The following object is masked from 'package:ggplot2':
+
+    alpha
+
+
+Attaching package: 'kernlab'
+
+The following object is masked from 'package:ggplot2':
+
+    alpha
+
+
+Attaching package: 'kernlab'
+
+The following object is masked from 'package:ggplot2':
+
+    alpha
+
+
+Attaching package: 'kernlab'
+
+The following object is masked from 'package:ggplot2':
+
+    alpha
+
+
+Attaching package: 'kernlab'
+
+The following object is masked from 'package:ggplot2':
+
+    alpha
+
+starting worker pid=19968 on localhost:11401 at 09:22:03.270
+starting worker pid=22832 on localhost:11401 at 09:23:14.298
+starting worker pid=5464 on localhost:11401 at 09:23:14.305
+starting worker pid=26224 on localhost:11401 at 09:23:14.314
+starting worker pid=15924 on localhost:11401 at 09:23:14.324
+starting worker pid=5980 on localhost:11401 at 09:23:14.346
+starting worker pid=16564 on localhost:11401 at 09:23:14.350
+Error in unserialize(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Execution halted
+Execution halted
+starting worker pid=26984 on localhost:11401 at 09:26:32.299
+starting worker pid=9704 on localhost:11401 at 09:26:32.316
+starting worker pid=14748 on localhost:11401 at 09:26:32.341
+starting worker pid=12544 on localhost:11401 at 09:26:32.342
+starting worker pid=7472 on localhost:11401 at 09:26:32.347
+starting worker pid=18364 on localhost:11401 at 09:26:32.360
+Error in unserialize(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Execution halted
+ze(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Error in unserialize(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Error in unserialize(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Execution halted
+Execution halted
+starting worker pid=20516 on localhost:11401 at 09:27:04.789
+starting worker pid=11328 on localhost:11401 at 09:27:04.804
+starting worker pid=26780 on localhost:11401 at 09:27:04.819
+starting worker pid=21436 on localhost:11401 at 09:27:04.819
+starting worker pid=26456 on localhost:11401 at 09:27:04.841
+starting worker pid=21168 on localhost:11401 at 09:27:04.851
+Error in unserialize(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Execution halted
+Execution halted
+Error in unserialize(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Error in unserialize(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Error in unserialiExecution halted
+or reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Execution halted
+Loading required package: tune
+Loading required package: tune
+Loading required package: tune
+Loading required package: tune
+Loading required package: tune
+loaded tune and set parent environment
+loaded tune and set parent environment
+Loading required package: dplyr
+Loading required package: dplyr
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+ from 'package:stats':
+
+    filter, lag
+
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'dplyr'
+
+ from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'dplyr'
+
+ from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'recipes'
+
+
+Attaching package: 'recipes'
+
+
+Attaching package: 'recipes'
+
+The following object is masked from 'package:stats':
+
+    step
+
+The following object is masked from 'package:stats':
+
+    step
+
+The following object is masked from 'package:stats':
+
+    step
+
+The following object is masked from 'package:stats':
+
+    step
+
+
+Attaching package: 'recipes'
+
+For binary classification, the first factor level is assumed to be the event.
+Use the argument `event_level = "second"` to alter this as needed.
+The following object is masked from 'package:stats':
+
+    step
+
+he event.
+Use the argument `event_level = "second"` to alter this as needed.
+For binary classification, the first factor level is assumed to be the event.
+Use the argument `event_level = "second"` to alter this as needed.
+For binary classification, the first factor level is assumed to be the event.
+Use the argument `event_level = "second"` to alter this as needed.
+For binary classification, the first factor level is assumed to be the event.
+Use the argument `event_level = "second"` to alter this as needed.
+For binary classification, the first factor level is assumed to be the event.
+Use the argument `event_level = "second"` to alter this as needed.
+Loading required package: scales
+Loading required package: scales
+Loading required package: scales
+Loading required package: scales
+
+Attaching package: 'scales'
+
+
+Attaching package: 'scales'
+
+The following object is masked from 'package:purrr':
+
+    discard
+
+The following object is masked from 'package:purrr':
+
+    discard
+
+
+Attaching package: 'scales'
+
+
+The following object is masked from 'package:purrr':
+
+    discard
+
+
+Attaching package: 'scales'
+
+The following object is masked from 'package:purrr':
+
+    discard
+
+Loading required package: scales
+
+Attaching package: 'scales'
+
+The following object is masked from 'package:purrr':
+
+    discard
+
+
+Attaching package: 'scales'
+
+The following object is masked from 'package:purrr':
+
+    discard
+
+
+Attaching package: 'rlang'
+
+The following objects are masked from 'package:purrr':
+
+    %@%, as_function, flatten, flatten_chr, flatten_dbl, flatten_int,
+    flatten_lgl, flatten_raw, invoke, list_along, modify, prepend,
+    splice
+
+
+Attaching package: 'vctrs'
+
+The following object is masked from 'package:tibble':
+
+    data_frame
+
+The following object is masked from 'package:dplyr':
+
+    data_frame
+
+
+Attaching package: 'rlang'
+
+
+Attaching package: 'rlang'
+
+The following objects are masked from 'package:purrr':
+
+    %@%, as_function, flatten, flatten_chr, flatten_dbl, flatten_int,
+    flatten_lgl, flatten_raw, invoke, list_along, modify, prepend,
+    splice
+
+The following objects are masked from 'package:purrr':
+
+    %@%, as_function, flatten, flatten_chr, flatten_dbl, flatten_int,
+    flatten_lgl, flatten_raw, invoke, list_along, modify, prepend,
+    splice
+
+
+Attaching package: 'rlang'
+
+The following objects are masked from 'package:purrr':
+
+    %@%, as_function, flatten, flatten_chr, flatten_dbl, flatten_int,
+    flatten_lgl, flatten_raw, invoke, list_along, modify, prepend,
+    splice
+
+
+Attaching package: 'rlang'
+
+
+Attaching package: 'vctrs'
+
+ from 'package:purrr':
+
+    %@%, as_function, flatten, flatten_chr, flatten_dbl, flatten_int,
+    flatten_lgl, flatten_raw, invoke, list_along, modify, prepend,
+    splice
+
+The following object is masked from 'package:tibble':
+
+    data_frame
+
+
+Attaching package: 'vctrs'
+
+
+Attaching package: 'vctrs'
+
+The following object is masked from 'package:dplyr':
+
+    data_frame
+
+The following object is masked from 'package:tibble':
+
+    data_frame
+
+The following object is masked from 'package:tibble':
+
+    data_frame
+
+The following object is masked from 'package:dplyr':
+
+    data_frame
+
+The following object is masked from 'package:dplyr':
+
+    data_frame
+
+
+Attaching package: 'rlang'
+
+The following objects are masked from 'package:purrr':
+
+    %@%, as_function, flatten, flatten_chr, flatten_dbl, flatten_int,
+    flatten_lgl, flatten_raw, invoke, list_along, modify, prepend,
+    splice
+
+
+Attaching package: 'vctrs'
+
+The following object is masked from 'package:tibble':
+
+    data_frame
+
+The following object is masked from 'package:dplyr':
+
+    data_frame
+
+
+Attaching package: 'vctrs'
+
+The following object is masked from 'package:tibble':
+
+    data_frame
+
+The following object is masked from 'package:dplyr':
+
+    data_frame
+
+! Fold5: internal: While computing binary `precision()`, no predicted events were...
+! Fold1: internal: While computing binary `precision()`, no predicted events were...
+! Fold2: internal: While computing binary `precision()`, no predicted events were...
+loaded tune and set parent environment
+loaded tune and set parent environment
+
+Attaching package: 'rpart'
+
+The following object is masked from 'package:dials':
+
+    prune
+
+loaded tune and set parent environment
+
+Attaching package: 'rpart'
+
+The following object is masked from 'package:dials':
+
+    prune
+
+loaded tune and set parent environment
+
+Attaching package: 'rpart'
+
+The following object is masked from 'package:dials':
+
+    prune
+
+loaded tune and set parent environment
+
+Attaching package: 'rpart'
+
+The following object is masked from 'package:dials':
+
+    prune
+
+loaded tune and set parent environment
+
+Attaching package: 'rpart'
+
+The following object is masked from 'package:dials':
+
+    prune
+
+
+Attaching package: 'rpart'
+
+The following object is masked from 'package:dials':
+
+    prune
+
+! Fold3: internal: While computing binary `precision()`, no predicted events were...
+! Fold4: internal: While computing binary `precision()`, no predicted events were...
+! Fold1: internal: While computing binary `precision()`, no predicted events were...
+! Fold5: internal: While computing binary `precision()`, no predicted events were...
+! Fold2: internal: While computing binary `precision()`, no predicted events were...
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+! Fold2: internal: While computing binary `precision()`, no predicted events were...
+! Fold5: internal: While computing binary `precision()`, no predicted events were...
+! Fold4: internal: While computing binary `precision()`, no predicted events were...
+! Fold3: internal: While computing binary `precision()`, no predicted events were...
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+! Fold2: internal: While computing binary `precision()`, no predicted events were...
+! Fold4: internal: While computing binary `precision()`, no predicted events were...
+! Fold5: internal: While computing binary `precision()`, no predicted events were...
+! Fold3: internal: While computing binary `precision()`, no predicted events were...
+! Fold1: internal: While computing binary `precision()`, no predicted events were...
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+Registered S3 methods overwritten by 'themis':
+  method                  from   
+  bake.step_downsample    recipes
+  bake.step_upsample      recipes
+  prep.step_downsample    recipes
+  prep.step_upsample      recipes
+  tidy.step_downsample    recipes
+  tidy.step_upsample      recipes
+  tunable.step_downsample recipes
+  tunable.step_upsample   recipes
+Registered S3 methods overwritten by 'themis':
+  method                  from   
+  bake.step_downsample    recipes
+  bake.step_upsample      recipes
+  prep.step_downsample    recipes
+  prep.step_upsample      recipes
+  tidy.step_downsample    recipes
+  tidy.step_upsample      recipes
+  tunable.step_downsample recipes
+  tunable.step_upsample   recipes
+Registered S3 methods overwritten by 'themis':
+  method                  from   
+  bake.step_downsample    recipes
+  bake.step_upsample      recipes
+  prep.step_downsample    recipes
+  prep.step_upsample      recipes
+  tidy.step_downsample    recipes
+  tidy.step_upsample      recipes
+  tunable.step_downsample recipes
+  tunable.step_upsample   recipes
+
+Attaching package: 'themis'
+
+The following objects are masked from 'package:recipes':
+
+    step_downsample, step_upsample
+
+
+Attaching package: 'themis'
+
+The following objects are masked from 'package:recipes':
+
+    step_downsample, step_upsample
+
+
+Attaching package: 'themis'
+
+The following objects are masked from 'package:recipes':
+
+    step_downsample, step_upsample
+
+Registered S3 methods overwritten by 'themis':
+  method                  from   
+  bake.step_downsample    recipes
+  bake.step_upsample      recipes
+  prep.step_downsample    recipes
+  prep.step_upsample      recipes
+  tidy.step_downsample    recipes
+  tidy.step_upsample      recipes
+  tunable.step_downsample recipes
+  tunable.step_upsample   recipes
+
+Attaching package: 'themis'
+
+The following objects are masked from 'package:recipes':
+
+    step_downsample, step_upsample
+
+Registered S3 methods overwritten by 'themis':
+  method                  from   
+  bake.step_downsample    recipes
+  bake.step_upsample      recipes
+  prep.step_downsample    recipes
+  prep.step_upsample      recipes
+  tidy.step_downsample    recipes
+  tidy.step_upsample      recipes
+  tunable.step_downsample recipes
+  tunable.step_upsample   recipes
+
+Attaching package: 'themis'
+
+The following objects are masked from 'package:recipes':
+
+    step_downsample, step_upsample
+
+Registered S3 methods overwritten by 'themis':
+  method                  from   
+  bake.step_downsample    recipes
+  bake.step_upsample      recipes
+  prep.step_downsample    recipes
+  prep.step_upsample      recipes
+  tidy.step_downsample    recipes
+  tidy.step_upsample      recipes
+  tunable.step_downsample recipes
+  tunable.step_upsample   recipes
+
+Attaching package: 'themis'
+
+The following objects are masked from 'package:recipes':
+
+    step_downsample, step_upsample
+
+! Fold2: preprocessor 1/1, model 1/1: glm.fit: fitted probabilities numerically 0...
+! Fold5: preprocessor 1/1, model 1/1: glm.fit: fitted probabilities numerically 0...
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+! Fold5: preprocessor 1/1, model 1/1: glm.fit: fitted probabilities numerically 0...
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+! Fold3: internal: While computing binary `precision()`, no predicted events were...
+! Fold4: internal: While computing binary `precision()`, no predicted events were...
+! Fold1: internal: While computing binary `precision()`, no predicted events were...
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+! Fold2: preprocessor 1/1, model 1/1: glm.fit: fitted probabilities numerically 0...
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+loaded tune and set parent environment
+Error in unserialize(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+Error in unserialize(node$con) : error reading from connection
+Calls: <Anonymous> ... doTryCatch -> recvData -> recvData.SOCKnode -> unserialize
+In addition: There were 13 warnings (use warnings() to see them)
+ere were 13 warnings (use warnings() to see them)
+Execution halted
+Execution halted
+Execution halted
+Execution halted
+Execution halted

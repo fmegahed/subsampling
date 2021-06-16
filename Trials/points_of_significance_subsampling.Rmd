@@ -1,0 +1,233 @@
+---
+title: "Modeling the Covariation between New Weekly Confirmed COVID-19 Cases and Deaths in the U.S. States: A Retrospective Analysis of 52 Weeks of Data"
+author:
+  - name: "Fadel M. Megahed ^[Email: fmegahed@miamioh.edu | Phone: +1-513-529-4185 | Website: <a href=\"https://miamioh.edu/fsb/directory/?up=/directory/megahefm\">Miami University Official</a>]"
+    affiliation: Farmer School of Business, Miami University
+bibliography: subsampling.bib
+csl: apa.csl
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+    number_sections: TRUE
+    theme: simplex
+    paged_df: TRUE
+    code_folding: show
+    code_download: TRUE
+includes:
+  in_header: structure.tex
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      cache = TRUE,
+                      progress = FALSE, 
+                      verbose = FALSE,
+                      dpi = 600,
+                      dev = c('png', 'tiff'),
+                      out.width = '100%')
+options(qwraps2_markup = "markdown")
+
+library(ggplot2); theme_set(theme_bw(base_size = 8, base_family = "Arial"))
+```
+
+# R Setup and Required Packages
+In this project, the open-source R programming language [@R2021] is used to model the progression in the COVID-19 pandemic in different U.S. counties. R is maintained by an international team of developers who make the language available at [The Comprehensive R Archive Network](https://cran.r-project.org/). Readers interested in reusing our code and reproducing our results should have R installed locally on their machines. R can be installed on a number of different operating systems (see [Windows](https://cran.r-project.org/bin/windows/), [Mac](https://cran.r-project.org/bin/macosx/), and [Linux](https://cran.r-project.org/bin/linux/) for the installation instructions for these systems). We also recommend using the RStudio interface for R. The reader can [download RStudio](http://www.rstudio.com/ide) for free by following the instructions at the link. For non-R users, we recommend the [Hands-on Programming with R](https://rstudio-education.github.io/hopr/packages.html) for a brief overview of the software's functionality. Hereafter, we assume that the reader has an introductory understanding of the R programming language.
+
+In the code chunk below, we load the packages used to support our analysis. Additionally, we source a `custom_functions.R` file that contains several functions that we will utilize in our analysis. Note that the code of this and any of the code chunks can be hidden by clicking on the 'Hide' button to facilitate the navigation. **The reader can hide all code and/or download the Rmd file associated with this document by clicking on the Code button on the top right corner of this document.** 
+
+```{r packages, cache=FALSE}
+if(require(pacman)==FALSE) install.packages("pacman") # Install pacman (if not already installed)
+
+pacman::p_load(tidyverse, magrittr, tidymodels, themis, # typical packages used in data science
+               DT, pander, knitr, # for formatting and nicely printed outputs
+               rvest, # for getting some datasets
+               scales, RColorBrewer, DataExplorer, plotly, ggsci, # for plots
+               caret, caTools, MASS, nnet, rpart, ranger, # for ML models
+               conflicted) # for managing conflicts in functions with same names
+
+# Handling conflicting function names from packages
+conflict_prefer('combine', 'dplyr') # Preferring dplyr::combine over any other package
+conflict_prefer('select', "dplyr") #Preferring dplyr::select over any other package
+conflict_prefer("summarize", "dplyr") # similar to above but with dplyr::summarize
+conflict_prefer("filter", "dplyr") # Preferring filter from dplyr
+conflict_prefer("step_downsample", "themis")
+conflict_prefer("step_upsample", "themis")
+conflict_prefer("step_smote", "themis")
+
+set.seed(2021) # to assist with reproducibility
+sInfo = sessionInfo() # saving all the packages/functions & session Info
+
+source("custom_functions.R")
+```
+
+---
+
+# Extracting and Transforming the Datasets
+In this code chunk, we extract the 100 two-class imbalanced datasets from the [KEEL Repository](https://sci2s.ugr.es/keel/imbalanced.php?order=ins#subA). The output from this step is a data.frame containing:   
+
+  (a) *dataset*, which captures the name of the dataset,    
+  (b) *imbalance_ratio*, which captures the ratio of the $\frac{\text{majority class}}{\text{minority class}}$, i.e., $\frac{\text{negative class}}{\text{positive class}}$,   
+  (c) *data*, which captures the entire data for each dataset,  
+  (d) *predictors*, which captures the names and values of all the independent variables for each dataset, and   
+  (e) *response*, which captures the values of the response variable for each dataset.   
+  
+Note that the resulting data.frame contains a 100 rows, corresponding to the total number of datasets, and uses the list column structure that facilitates the utilization of the vectorized `purrr::map()` functions within `dplyr::mutate()`.    
+```{r extractData}
+# Extracting the imbalanced datasets from the KEEL Repository
+# ------------------------------------------------------------
+  # [A] Scraping the URLs for the datasets
+  keelURL = "https://sci2s.ugr.es/keel/imbalanced.php?order=ins#subA"
+  kDataLinks = keelURL %>% read_html() %>%
+    html_nodes(" td:nth-child(5) > a") %>% html_attr('href')
+  kDataFullLinks = paste0('https://sci2s.ugr.es/keel/', kDataLinks)
+  
+  # [B] Extracting the dataset names from the links
+  datasetNames = str_match(kDataLinks, "^.+/(.*?).zip") %>% as.data.frame()
+
+  # [C] Extracting the number of attributes
+  numAttributes = keelURL %>% read_html() %>%
+    html_nodes("td.dataDAT > span.bold") %>% html_text()
+  
+  # [D] Number of observations per dataset
+  numObs = keelURL %>% read_html() %>%
+    html_nodes("td:nth-child(3)") %>% html_text()
+  
+  # [E] Imbalance Ratio
+  imbRatio = keelURL %>% read_html() %>%
+    html_nodes("td:nth-child(4)") %>% html_text()
+  
+  # [F] Retaining only the two-class-problem datasets
+  twoClassProbIndex = str_detect(datasetNames$V1, "Than9")
+  kDataFullLinks = kDataFullLinks[twoClassProbIndex]
+  
+  datasetNames = datasetNames[twoClassProbIndex, 2]
+  numAttributes = numAttributes[twoClassProbIndex] %>% as.numeric()
+  numObs = numObs %>% as.numeric() %>% na.omit() %>% .[twoClassProbIndex]
+  imbRatio = imbRatio[twoClassProbIndex] %>% as.numeric()
+  
+  # [G] Meta table for datasets
+  metaTable = data.frame(name = datasetNames, 
+                         number_of_attributes = numAttributes,
+                         number_of_observations = numObs,
+                         imbalance_ratio = imbRatio)
+  
+  # [H] Capitalizing on our custom functions to generate a list of the datasets
+  datasets = keelData(kDataFullLinks, datasetNames, numAttributes,
+                      dest = here::here("Data/imbalancedDatasets")) %>% 
+    enframe(name = "dataset", value = "data") %>% 
+    mutate(predictors = map(.x = data, .f = select, -c(contains("Class" ))),
+           response = map(.x = data, .f = select, contains("Class")) ) %>% 
+    mutate(predictors = map(.x = predictors, .f =tibble),
+           response = map(.x = response, .f = extract2, 1)) %>% 
+    left_join(metaTable,
+              by = c("dataset" = "name") , keep = FALSE) %>% 
+    select(dataset, imbalance_ratio, data, predictors, response)
+  
+  saveRDS(datasets, "Data/results/datasets.rds")
+```
+
+---
+
+
+# Machine Learning Models
+In the code chunk below, we define four subsampling scenarios and five machine learning models that will be examined in our experiment. Note that the `mlFuncFact()` is defined in our `custom_functions.R` file, which we sourced in Section 1 of this document.
+```{r functions}
+
+dataset = readRDS("Data/results/datasets.rds")
+
+subsampling = c('none', 'down', 'up', 'smote')
+
+log_spec = logistic_reg() %>% set_engine("glm") %>% set_mode("classification")
+cart_spec = decision_tree() %>% set_engine("rpart") %>% set_mode("classification")
+nnet_spec = mlp() %>% set_engine("keras") %>% set_mode("classification")
+rf_spec = rand_forest() %>% set_engine("ranger") %>% set_mode("classification")
+svm_spec = svm_rbf() %>%  set_engine("kernlab") %>% set_mode("classification") 
+
+model_df = list(
+  logReg = log_spec,
+  cart = cart_spec,
+  nnet = nnet_spec,
+  rf = rf_spec,
+  svm = svm_spec
+  ) %>% enframe(name = 'model', value = 'model_func')
+
+```
+
+---
+
+# Experimentation
+
+In the code chunk below, we run our numerical experiments on 99 datasets (which results in a total of $99 (datasets) \times 4 (subsampling) \times  5 (MLModels) = 1,980$ experiments that we ran. We dropped the `flare-F` since the number of predictors did not match what was extracted from the table in the [KEEL Repository](https://sci2s.ugr.es/keel/imbalanced.php?order=ins#subA), which resulted in an incorrect extraction of the response variable. While we could have fixed this, we chose not to in order to abide by the meta data provided by the [KEEL Repository](https://sci2s.ugr.es/keel/imbalanced.php?order=ins#subA).
+
+
+## Running the Experiment
+```{r experimentROC}
+experiment = datasets[-31,] %>%
+  arrange(imbalance_ratio) %>% 
+  crossing(subsampling, model_df) %>% 
+  mutate(parameters = pmap(list(predictors, response, subsampling),
+                           .f = ~list(data = ..1, label = ..2, samplingMethod = ..3)),
+         trainedModel = quiet(invoke_map(model_func, parameters)))
+
+results = experiment %>% 
+  mutate(
+    accuracy = map_dbl(trainedModel, ~max(.x$results$Accuracy)),
+    kappa = map_dbl(trainedModel, ~max(.x$results$Kappa)),
+    roc = map_dbl(trainedModel, ~max(.x$results$ROC)),
+    sensitivity = map_dbl(trainedModel, ~max(.x$results$Sens)),
+    specificity = map_dbl(trainedModel, ~max(.x$results$Spec)),
+    accuracySD = map_dbl(trainedModel, ~max(.x$results$AccuracySD)),
+    kappaSD = map_dbl(trainedModel, ~max(.x$results$KappaSD)),
+    rocSD = map_dbl(trainedModel, ~max(.x$results$ROCSD)),
+    sensSD = map_dbl(trainedModel, ~max(.x$results$SensSD)),
+    specSD = map_dbl(trainedModel, ~max(.x$results$SpecSD))
+  )
+
+results %<>% select(dataset, imbalance_ratio, subsampling, model, 
+                    accuracy, kappa, roc, sensitivity, specificity,
+                    accuracySD, kappaSD, rocSD, sensSD, specSD) %>% 
+  arrange(imbalance_ratio, model, roc)
+
+saveRDS(results, "Data/results/numerical_exp_results.rds")
+
+# Tabulating the results and providing a way to it to different formats
+datatable(results,
+          extensions = c('FixedColumns', 'Buttons'), options = list(
+            dom = 'Bfrtip',
+            scrollX = TRUE,
+            buttons = c('copy', 'csv', 'excel', 'pdf'),
+            fixedColumns = list(leftColumns = 4))
+          ) %>% 
+  formatRound(columns= c("accuracy", "kappa", "roc", "sensitivity", "specificity",
+                         "accuracySD", "kappaSD", "rocSD", "sensSD", "specSD"),
+              digits=2) 
+```
+
+## Visualizing the Results
+
+Below, we visualize a sample of our results. 
+```{r experimentViz, fig.height=16, dependson="experimentROC"}
+results %>% arrange(imbalance_ratio) %>% 
+  ggplot(aes(x = subsampling, colour = model)) +
+  geom_point(aes(y = roc), size = 1.5) +
+  geom_errorbar(aes(ymin = roc - rocSD,
+                    ymax = pmin((roc + rocSD), 1))) +
+  theme_bw(base_size = 7) + ylim(0, 1) +
+  facet_grid(rows = vars(dataset), cols = vars(model)) +
+  theme(legend.position = "top") + scale_color_npg() 
+```
+
+
+
+---
+
+# Conclusions
+
+
+---
+
+# References {-}
