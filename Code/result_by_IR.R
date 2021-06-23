@@ -45,15 +45,15 @@ for (k in 1:4){
     ggplot(aes(x = measure, y = value)) +
     geom_boxplot() +
     facet_grid(cols = vars(metric), rows = vars(subsampling)) +
-    theme_bw()+
-    theme(axis.title = element_text(size = 16), axis.text = element_text(size = 12),
-          strip.text = element_text(size = 16)) + ylim(0, 1) +
+    theme_bw(base_size = 18)+
+    theme(axis.title = element_text(size = 18), axis.text = element_text(size = 12),
+          strip.text = element_text(size = 18)) + ylim(0, 1) +
     labs(title = data_title[k]) + 
-    theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size=16)) + scale_color_npg()
+    theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size=18)) + scale_color_npg()
 }
 
-png(paste0("../Figures/Example1.png"), width = 900, height = 600)
-p[[1]]
+png(paste0("../Figures/Example4.png"), width = 900, height = 600)
+p[[4]]
 dev.off()
 
 
@@ -64,7 +64,7 @@ img_list <- lapply(imgs, image_read)
 img_joined <- image_join(img_list)
 
 ## animate at 1 frame per 5 seconds
-img_animated <- image_animate(img_joined, delay=2000)
+img_animated <- image_animate(img_joined, delay=1000)
 
 ## view animated image
 img_animated

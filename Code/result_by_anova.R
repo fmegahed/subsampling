@@ -62,17 +62,23 @@ data_title <- c("(a) Type II Sum of Squares and Anova F-tests",
 result_table[,1:3] = apply(result_table[,1:3], 2, function(x) round(x, 3))
 result_table$`Pr(>F)` = scales::scientific(result_table$`Pr(>F)`)
 
-A <- tableGrob(result_table, theme=ttheme_minimal(base_size=22, padding = unit(c(4, 0), "mm")))
+A <- tableGrob(result_table, theme=ttheme_minimal(base_size = 8))
+
+# Adding Table borders
+A <- gtable_add_grob(A, grobs = rectGrob(gp = gpar(fill = NA, lwd = 2)),
+                       t = 2, b = nrow(A), l = 1, r = ncol(A))
+A <- gtable_add_grob(A,
+                     grobs = rectGrob(gp = gpar(fill = NA, lwd = 2)),
+                     t = 1, l = 1, r = ncol(A))
+grid.draw(A)
+
+## Adjusting the dimensions of the gtable
+A$widths = unit(c('0.46', '0.14', '0.1', '0.14', '0.2'), "npc")
+
 
 #A <- gtable_add_padding(A, unit(0.3, "cm"))
 
-title <- textGrob(data_title[1], gp = gpar(fontsize=22))
-
-A <- gtable_add_rows(
-  A, heights = unit(3, "cm"), pos = 0
-)
-
-A <- gtable_add_row_space(A, unit(1.5, "cm"))
+title <- textGrob(data_title[1], gp = gpar(fontsize=12))
 
 p[[1]] <- gtable_add_grob(
   A, list(title),
@@ -143,48 +149,41 @@ Inter.Sens.2.DF <- as.data.frame(Inter.Sens.2)
 p[[5]] <- ggplot(data=Inter.Sens.1.DF, aes(x=IR_category, y=fit, group=subsampling))+
   geom_line(size=2, aes(color=subsampling))+
   geom_ribbon(aes(ymin=fit-se, ymax=fit+se,fill=subsampling),alpha=.2)+
-  coord_cartesian(xlim = c(1.5,3.5))+
+  coord_cartesian(xlim = c(1.25,3.75))+
   ylab("Sensitivity")+
   xlab("Imbalance Ratio Category")+
-  labs(title="(b) Imbalance Raito and Subsampling as Sensitivity Predictors")+
+  #labs(title="(b) Imbalance Raito and Subsampling as Sensitivity Predictors")+
   ylim(0,1)+
-  theme_bw()+
-  theme(text = element_text(size=22),
-        legend.text = element_text(size=22),
-        legend.direction = "horizontal",
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        legend.position="top",
-        plot.title = element_text(hjust = 0.5, size=22)) +
+  theme_bw(base_size = 10)+
+  theme(text = element_text(size=10),
+        legend.title = element_text(size=5),
+        legend.text = element_text(size=5),
+    legend.position="top",
+        plot.title = element_text(hjust = 0.5, size=12)) +
   scale_x_discrete(limits = c("1", "2", "3", "4"),
-                   labels = c("1.82-5", "5-10", 
-                              "10-30", "30-129.44"))
+                   labels = c("[1.82, 5]", "(5, 10]", 
+                              "(10, 30]", "(30, 129.44]"))
 
 p[[6]] <- ggplot(data=Inter.Sens.2.DF, aes(x=IR_category, y=fit, group=method))+
   geom_line(size=2, aes(color=method))+
   geom_ribbon(aes(ymin=fit-se, ymax=fit+se,fill=method), alpha=.2)+
-  coord_cartesian(xlim = c(1.5,3.5))+
+  coord_cartesian(xlim = c(1.25,3.75))+
   ylab("Sensitivity")+
   xlab("Imbalance Ratio Category")+
-  labs(title="(c) Imbalance Raito and Method as Sensitivity Predictors")+
+  # labs(title="(c) Imbalance Raito and Method as Sensitivity Predictors")+
   ylim(0,1)+
-  theme_bw()+
-  theme(text = element_text(size=22),
-        legend.text = element_text(size=22),
-        legend.direction = "horizontal",
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        legend.position="top",
-        plot.title = element_text(hjust = 0.5, size=22)) +
+  theme_bw(base_size = 8)+
+  theme(text = element_text(size=10),
+        legend.title = element_text(size=5),
+        legend.text = element_text(size=5),
+    legend.position="top",
+        plot.title = element_text(hjust = 0.5, size=12)) +
   scale_x_discrete(limits = c("1", "2", "3", "4"),
-                   labels = c("1.82-5", "5-10", 
-                              "10-30", "30-129.44"))
+                   labels = c("[1.82, 5]", "(5, 10]", 
+                              "(10, 30]", "(30, 129.44]"))
 
 # * * Combining the Plots -------------------------------------------------
 
-png("../Figures/Anova_result.png", width = 2140, height = 600)
+png("../Figures/Anova_result.png", width = 9, height = 2.5, units = "in", res = 300)
 grid.arrange(p[[1]], p[[5]], p[[6]], nrow = 1, ncol = 3)
 dev.off()
-
-
-
