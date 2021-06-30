@@ -9,9 +9,9 @@ conflict_prefer("filter", "dplyr")
 conflict_prefer("mutate", "dplyr")
 conflict_prefer("group_by", "dplyr")
 
-All_Result <- readRDS("All_Result_new_5fold.RDS")
-All_Result$measure <- ifelse(All_Result$measure=="PR_AUC", "AUPRC", All_Result$measure)
-All_Result$measure <- ifelse(All_Result$measure=="ROC_AUC", "AUROC", All_Result$measure)
+All_Result <- readRDS("All_Results_0628.RDS")
+All_Result$measure <- ifelse(All_Result$measure=="Sensitivity", "Sens", All_Result$measure)
+All_Result$measure <- ifelse(All_Result$measure=="Specificity", "Spec", All_Result$measure)
 All_Result$subsampling <- ifelse(All_Result$subsampling=="DOWN", "UNDER", All_Result$subsampling)
 All_Result$subsampling <- ifelse(All_Result$subsampling=="UP", "OVER", All_Result$subsampling)
 

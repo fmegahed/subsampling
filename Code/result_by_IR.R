@@ -8,13 +8,14 @@ conflict_prefer("mutate", "dplyr")
 conflict_prefer("group_by", "dplyr")
 conflict_prefer("select", "dplyr")
 
-All_Result <- readRDS("All_Result_new_5fold.RDS")
-All_Result$measure <- ifelse(All_Result$measure=="PR_AUC", "AUPRC", All_Result$measure)
-All_Result$measure <- ifelse(All_Result$measure=="ROC_AUC", "AUROC", All_Result$measure)
+All_Result <- readRDS("All_Results_0628.RDS")
+All_Result$measure <- ifelse(All_Result$measure=="Sensitivity", "Sens", All_Result$measure)
+All_Result$measure <- ifelse(All_Result$measure=="Specificity", "Spec", All_Result$measure)
 All_Result$subsampling <- ifelse(All_Result$subsampling=="DOWN", "UNDER", All_Result$subsampling)
 All_Result$subsampling <- ifelse(All_Result$subsampling=="UP", "OVER", All_Result$subsampling)
 All_Result$metric <- ifelse(All_Result$metric=="AUC", "AUPRC", All_Result$metric)
 All_Result$metric <- ifelse(All_Result$metric=="ROC", "AUROC", All_Result$metric)
+
 
 All_Result %<>% filter(measure %in% c("Accuracy", "AUPRC", "AUROC", "Sens", "Spec"))
 All_Result$subsampling <- factor(All_Result$subsampling, levels=c("NULL", "UNDER", "OVER", "SMOTE")) 
