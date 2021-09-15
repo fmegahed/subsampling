@@ -1,0 +1,1258 @@
+---
+title: "Supplementary Material for Points of Significance: Strategies for Handling the Class Imbalance Problem"
+author:
+  - name: "Fadel M. Megahed ^[Email: fmegahed@miamioh.edu | Phone: +1-513-529-4185 | Website: <a href=\"https://miamioh.edu/fsb/directory/?up=/directory/megahefm\">Miami University Official</a>]"
+    affiliation: Farmer School of Business, Miami University, Oxford, OH, USA
+  - name: "Ying-Ju Tessa Chen ^[Email: ychen4@udayton.edu | Phone: +1-937-229-2405 | website: <a href=\"http://sites.udayton.edu/ychen4\">University of Dayton]"
+    affiliation: Department of Mathematics, University of Dayton, Dayton, OH, USA
+  - name: "Aly Megahed ^[Email: aly.megahed@us.ibm.com | website: <a href=\"https://researcher.watson.ibm.com/researcher/view.php?person=us-aly.megahed\">IBM Research]"
+    affiliation: Almaden Research Center, IBM, San Jose, CA, USA
+  - name: "Yuya Jeremy Ong ^[Email: yuyajong@ibm.com | website: <a href=\"https://researcher.watson.ibm.com/researcher/view_person_pubs.php?person=ibm-yuyajong&t=1\">IBM Research]"
+    affiliation: Almaden Research Center, IBM, San Jose, CA, USA
+  - name: "Martin Krzywinski ^[Email: martink@bcgsc.ca | website: <a href=\"http://mkweb.bcgsc.ca\"> Genome Sciences Centre]"
+    affiliation: Canada's Michael Smith Genome Sciences Centre, Vancouver, British Columbia, Canada
+  - name: "Naomi Altman ^[Email: nsa1@psu.edu | website: <a href=\"http://www.personal.psu.edu/nsa1\"> The Pennsylvania State University]"
+    affiliation: Department of Statistics, The Pennsylvania State University, State College, PA, USA
+bibliography: subsampling.bib
+csl: apa.csl
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    css: custom.css
+    toc: TRUE
+    toc_float: TRUE
+    number_sections: TRUE
+    theme: readable
+    paged_df: TRUE
+    code_folding: show
+    code_download: TRUE
+  includes:
+    in_header: structure.tex
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      cache = TRUE,
+                      progress = FALSE, 
+                      verbose = FALSE,
+                      dpi = 600,
+                      dev = c('png', 'tiff'),
+                      out.width = '100%')
+options(qwraps2_markup = "markdown")
+
+library(ggplot2); theme_set(theme_bw(base_size = 8, base_family = "Arial"))
+```
+
+# R Setup and Required Packages
+In this project, the open-source R programming language [@R2021] is used to study the strategies for handling the class imbalance problem. R is maintained by an international team of developers who make the language available at [The Comprehensive R Archive Network](https://cran.r-project.org/){target="_blank"}. Readers interested in reusing our code and reproducing our results should have R installed locally on their machines. R can be installed on a number of different operating systems (see [Windows](https://cran.r-project.org/bin/windows/){target="_blank"}, [Mac](https://cran.r-project.org/bin/macosx/){target="_blank"}, and [Linux](https://cran.r-project.org/bin/linux/){target="_blank"} for the installation instructions for these systems). We also recommend using the RStudio interface for R. The reader can [download RStudio](http://www.rstudio.com/ide){target="_blank"} for free by following the instructions at the link. For non-R users, we recommend the [Hands-on Programming with R](https://rstudio-education.github.io/hopr/packages.html){target="_blank"} for a brief overview of the software's functionality. Hereafter, we assume that the reader has an introductory understanding of the R programming language.
+
+In the code chunk below, we load the packages used to support our analysis. Additionally, we source [custom_functions.R](https://raw.githubusercontent.com/Ying-Ju/subsampling.github.io/main/custom_functions.R){target="_blank"} file that contains several functions that we will utilize in our analysis. Note that the code of this and any of the code chunks can be shown by clicking on the 'Code' button to facilitate the navigation. **The reader can show all code and/or download the Rmd file associated with this document by clicking on the Code button on the top right corner of this document.** 
+
+```{r packages, cache=FALSE}
+if(require(pacman)==FALSE) install.packages("pacman") # Install pacman (if not already installed)
+
+pacman::p_load(tidyverse, magrittr, tidymodels, themis, dplyr, plyr, # typical packages used in data science
+               imbalance, # for smote subsampling
+               DT, pander, knitr, purrr, # for formatting and nicely printed outputs
+               rvest, # for getting some datasets
+               scales, RColorBrewer, DataExplorer, plotly, ggsci, jtools, effects, ggtext, ggpubr, ggthemes, ggrepel, magick, # for plots
+               caret, caTools, MASS, nnet, rpart, ranger, # for ML models
+               car, # for Anova analysis
+               snow,  # for the parallel algorithm
+               ROCR, MLmetrics, modEvA, PerfMeas, PRROC, yardstick, # for ROC and PR curves
+               conflicted) # for managing conflicts in functions with same names
+
+
+
+# Handling conflicting function names from packages
+conflict_prefer('combine', 'dplyr') # Preferring dplyr::combine over any other package
+conflict_prefer('select', "dplyr") #Preferring dplyr::select over any other package
+conflict_prefer("summarize", "dplyr") # similar to above but with dplyr::summarize
+conflict_prefer("filter", "dplyr") # Preferring filter from dplyr
+conflict_prefer("arrange", "dplyr")
+conflict_prefer("mutate", "dplyr")
+conflict_prefer("join", "plyr")
+conflict_prefer("step_downsample", "themis")
+conflict_prefer("step_upsample", "themis")
+conflict_prefer("step_smote", "themis")
+
+
+sInfo = sessionInfo() # saving all the packages/functions & session Info
+
+source("https://raw.githubusercontent.com/Ying-Ju/subsampling.github.io/main/custom_functions.R")
+```
+
+---
+
+# Simulated Example 
+In this section, we will use a simulated dataset to demonstrate how to deal with the class imbalance problem. Consider a sample of normal and diseased cells and their corresponding enzyme levels A and B are observed. The level of enzyme A is normally distributed with mean 1 and standard deviation 0.2 in normal cells and normally distributed with mean 1.2 in diseased cells. The level of enzyme B is exponentially distributed with mean 1 in normal cells and depressed to mean 0.29 in diseased cells. 
+
+
+## Generating the synthetic data
+
+The following code chunk shows how we generate the synthetic datasets using different imbalance ratios (1, 5, 10, 25, 100, 333) and save all datasets in a list. A testdata set is generated as well. 
+
+```{r generating_data}
+set.seed(2024) # set the random seed 
+
+n <- 1000 # the size of the majority class
+cell_df <- data.frame(State = as.factor(c(rep("normal", n), rep("diseased", n))), 
+                      enzymeA = c(rnorm(n, 1, 0.2), rnorm(n, 1.2, 0.2)),
+                      enzymeB = c(rexp(n, 1), rexp(n, 1/0.29)))
+
+
+testdata <- data.frame(State = as.factor(c(rep("normal", 5000), rep("diseased", 5000))), 
+                       enzymeA = c(rnorm(5000, 1, 0.2), rnorm(5000, 1.2, 0.2)),
+                       enzymeB = c(rexp(5000, 1), rexp(5000, 1/0.29)))
+
+# IR: imbalance ratios
+IR <- c(1, 5, 10, 25, 100, 333)
+k <- round(n/IR)
+dataset <- vector(mode="list", length=length(IR))
+
+for (i in 1:length(IR)){
+  index <- sample((n+1):(2*n), k[i])
+  dataset[[i]] <- cell_df[c(1:n, index),]
+}
+
+```
+
+In our study, we will consider two performance evaluation metrics: Accuracy and ROC, four sub-sampling strategies: NULL, down, up, and smote. With 6 imbalance ratios, there will be 48 cases. The following code chunk shows how we create a dataframe of these cases. 
+
+```{r cases}
+dataset_id <- seq(1:length(dataset))
+subsampling_methods <- c("NULL", "down", "up", "smote")
+best_metrics <- c("Accuracy", "ROC")
+cases <- expand.grid(subsampling=subsampling_methods, metrics=best_metrics, ID=dataset_id, stringsAsFactors=FALSE)
+```
+
+The following figure shows the use of subsampling methods to obtain a balanced data using a synthetic data with the sample size 110 and the imbalance ratio IR=10.
+
+```{r figure1}
+set.seed(2024)
+cell_train <- data.frame(State = c(rep("normal", 100), rep("diseased", 10)), 
+                      enzymeA = c(rnorm(100, 1, 0.2), rnorm(10, 1.2, 0.2)),
+                      enzymeB = c(rexp(100, 1), rexp(10, 1/0.29)))
+
+cell_train$State <- as.factor(cell_train$State) 
+
+diff = table(cell_train$State)[[2]] - table(cell_train$State)[[1]]
+
+# Original Data Plot --------------------------------------------------
+
+cell_train %>% 
+  ggplot(aes(x = enzymeA, y = enzymeB, shape = State)) +
+  geom_point(size = 3) + theme_classic() + 
+  scale_color_manual(values = c('Original' = '#154360')) + 
+  scale_shape_manual(values = c('diseased' = '+' , 'normal' =  "o")) +
+  xlab("enzyme A level") + 
+  ylab("enzyme B level") +
+  labs(caption = 'The simulated data, 
+       containing 10 diseased (+) and 100 normal (o) cells.',
+       title = '(a) Original Data') + scale_alpha(guide = 'none') +
+  theme(legend.position = 'top', axis.title = element_text(size = 7), axis.text = element_text(size = 7),
+        strip.text = element_text(size = 7), legend.text=element_text(size = 7),
+        legend.title = element_text(size = 7), plot.title = element_text(hjust = 0.5, size = 7),
+        plot.caption = element_text(size = 7), legend.spacing.x = unit(0, 'cm')) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points")) -> p1
+
+
+# Under Sampling Plot -------------------------------------------------
+set.seed(2021)
+diseased = cell_train %>% filter(State == 'diseased')
+normal = setdiff(cell_train, diseased)
+
+diseased$Type = 'Original'
+
+normal$Type = 'Removed'
+rowsToBeKept = sample(1:nrow(normal), nrow(diseased))
+normal$Type[rowsToBeKept] = 'Original'
+
+underSampled = rbind(diseased, normal)
+
+caption2 = 'The simulated dataset, with \n 90 observations removed with random under sampling.'
+
+underSampled %>% 
+  ggplot(aes(x = enzymeA, y = enzymeB, shape = State, color = Type)) +
+  geom_point(size = 3) + theme_classic() + 
+  scale_color_manual(values = c('Original' = '#154360', 'Removed' = 'lightgrey')) + 
+  scale_shape_manual(values = c('diseased' = '+' , 'normal' = "o")) +
+  labs(caption = caption2, title = '(b) Under Sampled Data') + 
+  xlab("enzyme A level") + 
+  ylab("enzyme B level") +
+   guides(shape = guide_legend(order = 2), col = guide_legend(order = 1)) +
+  theme(legend.position = 'top', axis.title = element_text(size = 7), axis.text = element_text(size = 7),
+        strip.text = element_text(size = 7), legend.text=element_text(size = 7),
+        legend.title = element_text(size = 7), plot.title = element_text(hjust = 0.5, size = 7),
+        plot.caption = element_text(size = 7), legend.spacing.x = unit(0, 'cm')) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points")) -> p2
+ 
+
+# OverSampled Plot ----------------------------------------------------
+set.seed(2021)
+diseased = cell_train %>% filter(State == 'diseased')
+normal = setdiff(cell_train, diseased)
+
+normal$Type = 'Original'
+
+obsToBeAdded= sample(1:nrow(diseased), diff, replace = T)
+
+diseased = rbind(diseased, diseased[obsToBeAdded,] )
+diseased$Type = 'Added'
+diseased$Type[1:10] = 'Original'
+
+overSampled = rbind(diseased, normal)
+
+caption3 = 'The simulated dataset, with 90 observations added using random over \n sampling. Here, the observations were jittered for visualization purposes.'
+
+overSampled %>% 
+  ggplot(aes(x = enzymeA, y = enzymeB, shape = State, color = Type  )) +
+  geom_point(position=position_jitter(h=0.05, w=0.02), size = 3) + theme_classic() + 
+  scale_color_manual(values = c('Original' = '#154360', 'Added' = '#F88000')) + 
+  scale_shape_manual(values = c('diseased' = '+' , 'normal' =  "o")) +
+  labs(caption = caption3, title = '(c) Over Sampled Data') + 
+  xlab("enzyme A level") + 
+  ylab("enzyme B level") +
+   guides(shape = guide_legend(order = 2),col = guide_legend(order = 1)) +
+  theme(legend.position = 'top', axis.title = element_text(size = 7), axis.text = element_text(size = 7),
+        strip.text = element_text(size = 7), legend.text=element_text(size = 7),
+        legend.title = element_text(size = 7), plot.title = element_text(hjust = 0.5, size = 7),
+        plot.caption = element_text(size = 7), legend.spacing.x = unit(0, 'cm')) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points")) -> p3
+
+
+# * * SMOTE Plot ----------------------------------------------------------
+set.seed(2021)
+smoteSamples <- mwmote(dataset = cell_train, numInstances = diff,
+                       classAttr = "State")
+smoteDataset <- rbind(cell_train, smoteSamples)
+smoteDataset$Type = c( rep('Original', 110), rep('SMOTE', diff) ) 
+
+caption4 = 'The simulated dataset, with \n 90 synthetic observations generated using a SMOTE-based technique.'
+
+
+smoteDataset %>% 
+  ggplot(aes(x = enzymeA, y = enzymeB, shape = State, color = Type  )) +
+  geom_point(size = 3) + theme_classic() + 
+  scale_color_manual(values = c('Original' = '#154360', 'SMOTE' = '#FF6666')) + 
+  scale_shape_manual(values = c('diseased' = '+' , 'normal' =  "o")) +
+  labs(caption = caption4, title = '(d) SMOTE Sampled Data') + 
+  xlab("enzyme A level") + 
+  ylab("enzyme B level") +
+  guides(shape = guide_legend(order = 2),col = guide_legend(order = 1)) +
+  theme(legend.position = 'top', axis.title = element_text(size = 7), axis.text = element_text(size = 7),
+        strip.text = element_text(size = 7), legend.text=element_text(size = 7),
+        legend.title = element_text(size = 7), plot.title = element_text(hjust = 0.5, size = 7),
+        plot.caption = element_text(size = 7), legend.spacing.x = unit(0, 'cm')) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))-> p4
+
+# Combining the Plots -------------------------------------------------
+ggpubr::ggarrange(p1, p2, p3, p4, nrow=2, ncol=2)
+
+```
+
+## Decision tree
+We will use the CART decision tree (rpart) method in the R package **caret** to develpe models in this section. The following code chunk shows how we obtained the performance measures using the CART decision tree method. 
+
+```{r dt}
+time.begin <- proc.time()[3]
+cl <- makeCluster(4, type="SOCK")
+ncases = nrow(cases)
+Result <- t(parSapply(cl, 1:ncases, allinone, dataset, testdata, cases, IR, "rpart"))
+stopCluster(cl)
+
+time.end <- proc.time()[3] - time.begin
+paste("It took", time.end, "seconds to run the program.")
+
+Result <- as.data.frame(Result)
+Result_cart <- as.data.frame(matrix(NA, ncol=ncol(Result), nrow=nrow(Result)))
+
+for (i in 1:ncol(Result)){
+  Result_cart[,i] <- unlist(Result[,i])
+}
+colnames(Result_cart) <- colnames(Result)
+
+write_csv(Result_cart, "result_performance_cart.csv")
+
+```
+
+
+### Comparison I {.tabset .tabset-fade .tabset-pills}
+
+In this subsection, we show the holdout predictive performance of the CART decision tree model for classifying normal and diseased cells with no subsampling and under-sampling applied to training datasets having IR of 1, 5, 10, 25, 100, and 333. The reader should note that the x-axis, Imbalance Ratio, spacing is scaled using a logarithmic transformation to facilitate the visualization of the highly skewed IR values. 
+
+#### Accuracy vs. Imbalance Ratio {-}
+
+```{r Figure2adt}
+Result_cart$subsampling <- toupper(Result_cart$subsampling)
+Result_cart$subsampling <- ifelse(Result_cart$subsampling=="DOWN", "UNDER", Result_cart$subsampling)
+Result_cart$subsampling <- ifelse(Result_cart$subsampling=="UP", "OVER", Result_cart$subsampling)
+Result_cart$subsampling <- factor(Result_cart$subsampling, levels=c("NULL", "UNDER", "OVER", "SMOTE")) 
+
+temp_data <- Result_cart %>% filter(metrics=="Accuracy", subsampling %in% c("NULL", "UNDER"))  
+temp_data$IR_cases <- rep(1:6, each=2)
+
+p1 <- temp_data %>% ggplot(aes(x = IR, y = Accuracy, group = subsampling)) +
+  geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("Accuracy") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), 
+        legend.title = element_text(size = 11), legend.text=element_text(size = 11)) + ylim(0, 1) + labs(title = "(a) Accuracy vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", function(x) exp(x)), labels=number_format()) + geom_text_repel(aes(label = paste("IR =", IR)), size=4, max.overlaps = getOption("ggrepel.max.overlaps", default = 20)) + theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+p1
+```
+
+#### Sensitivity vs. Imbalance Ratio {-}
+
+```{r Figure2bdt}
+p2 <- temp_data %>% ggplot(aes(x = IR, y = Sensitivity, group = subsampling)) +
+  geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("Sensitivity") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(b) Sensitivity vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", function(x) exp(x)), 
+                                                                                                        labels=number_format()) +
+  geom_text_repel(aes(label = paste("IR =", IR)), size=4,
+                  max.overlaps = getOption("ggrepel.max.overlaps", default = 20)) + theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+
+p2
+```
+
+#### AUROC Curve vs. Imbalance Ratio {-}
+
+```{r Figure2cdt}
+p3 <- temp_data %>% ggplot(aes(x = IR, y = AUROC, group = subsampling)) +
+  geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("AUROC Curve") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(c) AUROC Curve vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", 
+                                                                                                                                         function(x) exp(x)), labels=number_format()) + geom_text_repel(aes(label = paste("IR =", IR)), size=4,
+                                                                                                                                                                                                        max.overlaps = getOption("ggrepel.max.overlaps", default = 20)) + theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+
+p3
+```
+
+### Comparison II {.tabset .tabset-fade .tabset-pills}
+
+Here, we show the holdout predictive performance of the CART decision tree model for classifying normal and diseased celss with under-sampling, over-sampling, and SMOTE applied to training datasets having IR of 1, 5, 10, 25, 100, and 333. 
+
+#### Accuracy vs. Imbalance Ratio {-}
+
+```{r Figure3adt}
+temp_data2 <- Result_cart %>% filter(metrics=="Accuracy", subsampling %in% c("UNDER", "OVER", "SMOTE"))  
+temp_data2$IR_cases <- rep(1:6, each=3)
+temp_data2$label <- ""
+temp_data2$label[which(temp_data2$subsampling=="SMOTE")] <- paste("IR =", temp_data2$IR[which(temp_data2$subsampling=="SMOTE")])
+
+p11 <- temp_data2 %>% ggplot(aes(x = IR, y = Accuracy, group = subsampling, label=label)) + geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("Accuracy") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(a) Accuracy vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", 
+                                                                                                                                         function(x) exp(x)), labels=number_format()) + geom_text_repel(size=4) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+
+p11
+```
+
+#### Sensitivity Curve vs. Imbalance Ratio {-}
+
+```{r Figure3bdt}
+p22 <- temp_data2 %>% ggplot(aes(x = IR, y = Sensitivity, group = subsampling, label=label)) + geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("Sensitivity") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(b) Sensitivity vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", 
+                                                                                                                                         function(x) exp(x)), labels=number_format()) + geom_text_repel(size=4) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+p22
+```
+
+#### AUROC Curve vs. Imbalance Ratio {-}
+
+```{r Figure3cdt}
+p33 <- temp_data2 %>% ggplot(aes(x = IR, y = AUROC, group = subsampling, label=label)) + geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  scale_color_brewer(palette = "Dark2") +
+  xlab("Imbalance Ratio") + 
+  ylab("Area Under ROC Curve") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(c) AUROC Curve vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", 
+                                                                                                                                         function(x) exp(x)), labels=number_format()) +
+  geom_text_repel(size=4) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+
+p33
+
+```
+
+### Comparison III
+
+In this subsection, we show the ROC and Precision-Recall Curve for the decision tree classifier of normal and diseased states, corresponding to the no-(NULL) and under-sampling scenarios. The curves were generated based on a balanced holdout set of 1000 observations (500 for each cell outcome), and the models were trained based on the IR=10 using our simulated data. One should note that the functions used in different R packages to estimate AUPRC may lead to inconsistent results due to the inconsistent definitions of AUPRC. Readers are refered to the appendix section for more explanations. 
+
+```{r dt_rocprc}
+index_null <- which(cases$subsampling=="NULL" & cases$metrics=="Accuracy" & cases$ID==3)
+index_best <- which(cases$subsampling=="down" & cases$metrics=="Accuracy" & cases$ID==3)
+
+null_result <- allinone(index_null, dataset, testdata, cases, IR, "rpart", 1)
+Best_result <- allinone(index_best, dataset, testdata, cases, IR, "rpart", 1)
+null_result$labels <- ifelse(null_result$obs=="diseased", 1, 0)
+Best_result$labels <- ifelse(Best_result$obs=="diseased", 1, 0)
+
+pred0 <- prediction(null_result$diseased, null_result$labels)
+perf0 <- performance(pred0,"tpr","fpr")
+pred1 <- prediction(Best_result$diseased, Best_result$labels)
+perf1 <- performance(pred1,"tpr","fpr")
+
+AUROC0 <- data.frame(OneMinusSpec=perf0@x.values[[1]], Sensitivity=perf0@y.values[[1]], subsampling = 'NULL') 
+AUROC1 <- data.frame(OneMinusSpec=perf1@x.values[[1]], Sensitivity=perf1@y.values[[1]], subsampling = 'UNDER') 
+
+AUROC = rbind(AUROC0, AUROC1)
+
+AUROC %>% ggplot(aes(x=OneMinusSpec, y = Sensitivity, group = subsampling, color = subsampling)) +
+  geom_line(size = 1) +
+  geom_point(size = 1.5) +
+  scale_color_brewer(palette = "Dark2", labels=c(paste0("NULL (AUROC: ", round(Result_cart$AUROC[index_null],2),")"), 
+                           paste0("UNDER (AUROC: ", round(Result_cart$AUROC[index_best],2),")"))) +
+  theme_classic() +
+  theme(legend.position = "top") +
+  labs(x = 'FPR (1 - Specificity)', y='TPR (Sensitivity)', title = "(a) ROC Curves") +
+    theme(axis.title = element_text(size = 10), axis.text = element_text(size = 10),
+        strip.text = element_text(size = 10), legend.text=element_text(size = 6),
+        legend.title = element_text(size = 7), plot.title = element_text(hjust = 0.5, size = 10)) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"), aspect.ratio = 1) ->  p_roc
+
+perf2 <- performance(pred0, "prec", "rec")
+perf3 <- performance(pred1, "prec", "rec")
+
+AUPRC0 <- data.frame(Recall=perf2@x.values[[1]], Precision=perf2@y.values[[1]], subsampling = 'NULL') 
+AUPRC1 <- data.frame(Recall=perf3@x.values[[1]], Precision=perf3@y.values[[1]], subsampling = 'UNDER') 
+
+AUPRC = rbind(AUPRC0, AUPRC1)
+
+AUPRC %>% ggplot(aes(x=Recall, y = Precision, group = subsampling, color = subsampling)) +
+  geom_line(size = 1) + 
+  geom_point(size = 1.5) + ylim(0,1) + 
+  scale_color_brewer(palette = "Dark2", labels=c(paste0("NULL (AUPRC: ", round(Result_cart$AUPRC[index_null],2),")"), 
+                           paste0("UNDER (AUPRC: ", round(Result_cart$AUPRC[index_best],2),")"))) +
+  theme_classic() +
+  theme(legend.position = "top") +
+  labs(x = "TPR (Recall)", y = "Precision", title = "(b) Precision-Recall Curves") +
+   theme(axis.title = element_text(size = 10), axis.text = element_text(size = 10),
+        strip.text = element_text(size = 10), legend.text=element_text(size = 6),
+        legend.title = element_text(size = 7), plot.title = element_text(hjust = 0.5, size = 10)) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"), aspect.ratio = 1) -> p_auc
+
+ggpubr::ggarrange(p_roc, p_auc, nrow=1, ncol=2)
+```
+
+## Losgistic Regression
+We will use the logistic regression (glm) method in the R package **caret** to develpe models in this section. 
+
+```{r glm}
+time.begin <- proc.time()[3]
+cl = makeCluster(4, type="SOCK")
+Result <- t(parSapply(cl, 1:ncases, allinone, dataset, testdata, cases, IR, "glm"))
+stopCluster(cl)
+
+time.end <- proc.time()[3] - time.begin
+paste("It took", time.end, "seconds to run the program.")
+
+Result <- as.data.frame(Result)
+Result_glm <- as.data.frame(matrix(NA, ncol=ncol(Result), nrow=nrow(Result)))
+
+for (i in 1:ncol(Result)){
+  Result_glm[,i] <- unlist(Result[,i])
+}
+colnames(Result_glm) <- colnames(Result)
+
+write_csv(Result_glm, "result_performance.csv")
+
+```
+
+### Comparison I {.tabset .tabset-fade .tabset-pills}
+
+In this subsection, we show the holdout predictive performance of the logistic regression model for classifying normal and diseased cells with no subsampling and under-sampling applied to training datasets having IR of 1, 5, 10, 25, 100, and 333. The reader should note that the x-axis, Imbalance Ratio, spacing is scaled using a logarithmic transformation to facilitate the visualization of the highly skewed IR values. 
+
+#### Accuracy vs. Imbalance Ratio {-}
+
+```{r Figure2aglm}
+Result_glm$subsampling <- toupper(Result_glm$subsampling)
+Result_glm$subsampling <- ifelse(Result_glm$subsampling=="DOWN", "UNDER", Result_glm$subsampling)
+Result_glm$subsampling <- ifelse(Result_glm$subsampling=="UP", "OVER", Result_glm$subsampling)
+Result_glm$subsampling <- factor(Result_glm$subsampling, levels=c("NULL", "UNDER", "OVER", "SMOTE")) 
+
+temp_data <- Result_glm %>% filter(metrics=="Accuracy", subsampling %in% c("NULL", "UNDER"))  
+temp_data$IR_cases <- rep(1:6, each=2)
+
+p1 <- temp_data %>% ggplot(aes(x = IR, y = Accuracy, group = subsampling)) +
+  geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("Accuracy") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), 
+        legend.title = element_text(size = 11), legend.text=element_text(size = 11)) + ylim(0, 1) + labs(title = "(a) Accuracy vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", function(x) exp(x)), labels=number_format()) + geom_text_repel(aes(label = paste("IR =", IR)), size=4, max.overlaps = getOption("ggrepel.max.overlaps", default = 20)) + theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+p1
+```
+
+#### Sensitivity vs. Imbalance Ratio {-}
+
+```{r Figure2bglm}
+p2 <- temp_data %>% ggplot(aes(x = IR, y = Sensitivity, group = subsampling)) +
+  geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("Sensitivity") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(b) Sensitivity vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", function(x) exp(x)), 
+                                                                                                        labels=number_format()) +
+  geom_text_repel(aes(label = paste("IR =", IR)), size=4,
+                  max.overlaps = getOption("ggrepel.max.overlaps", default = 20)) + theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+
+p2
+```
+
+#### AUROC Curve vs. Imbalance Ratio {-}
+
+```{r Figure2cglm}
+p3 <- temp_data %>% ggplot(aes(x = IR, y = AUROC, group = subsampling)) +
+  geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("AUROC Curve") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(c) AUROC Curve vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", 
+                                                          function(x) exp(x)), labels=number_format()) + geom_text_repel(aes(label = paste("IR =", IR)), size=4,
+max.overlaps = getOption("ggrepel.max.overlaps", default = 20)) + theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+
+p3
+```
+
+### Comparison II {.tabset .tabset-fade .tabset-pills}
+
+Here, we show the holdout predictive performance of the logistic regression model for classifying normal and diseased celss with under-sampling, over-sampling, and SMOTE applied to training datasets having IR of 1, 5, 10, 25, 100, and 333. 
+
+#### Accuracy vs. Imbalance Ratio {-}
+
+```{r Figure3aglm}
+temp_data2 <- Result_glm %>% filter(metrics=="Accuracy", subsampling %in% c("UNDER", "OVER", "SMOTE"))  
+temp_data2$IR_cases <- rep(1:6, each=3)
+temp_data2$label <- ""
+temp_data2$label[which(temp_data2$subsampling=="SMOTE")] <- paste("IR =", temp_data2$IR[which(temp_data2$subsampling=="SMOTE")])
+
+p11 <- temp_data2 %>% ggplot(aes(x = IR, y = Accuracy, group = subsampling, label=label)) + geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("Accuracy") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(a) Accuracy vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", 
+                                                                                                                                         function(x) exp(x)), labels=number_format()) + geom_text_repel(size=4) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+
+p11
+```
+
+#### Sensitivity Curve vs. Imbalance Ratio {-}
+
+```{r Figure3bglm}
+p22 <- temp_data2 %>% ggplot(aes(x = IR, y = Sensitivity, group = subsampling, label=label)) + geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  xlab("Imbalance Ratio") + 
+  ylab("Sensitivity") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(b) Sensitivity vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", 
+                                                                                                                                         function(x) exp(x)), labels=number_format()) + geom_text_repel(size=4) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+p22
+```
+
+#### AUROC Curve vs. Imbalance Ratio {-}
+
+```{r Figure3cglm}
+p33 <- temp_data2 %>% ggplot(aes(x = IR, y = AUROC, group = subsampling, label=label)) + geom_line(aes(color=subsampling), size=1) + geom_point(aes(color=subsampling), size=1.5) +
+  scale_color_brewer(palette = "Dark2") +
+  xlab("Imbalance Ratio") + 
+  ylab("Area Under ROC Curve") +
+  theme_classic()+
+  theme(axis.title = element_text(size = 11), axis.text = element_text(size = 11),
+        strip.text = element_text(size = 11), legend.text=element_text(size = 11),
+        legend.title = element_text(size = 11)) + ylim(0, 1) +
+  labs(title = "(c) AUROC Curve vs. Imbalance Ratio") + 
+  theme(legend.position = 'top', plot.title = element_text(hjust = 0.5, size = 11)) + scale_x_continuous(trans="log", breaks=trans_breaks("log", 
+                                                                                                                                         function(x) exp(x)), labels=number_format()) +
+  geom_text_repel(size=4) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"))
+
+p33
+
+```
+
+### Comparison III {.tabset .tabset-fade .tabset-pills}
+
+In this subsection, we show the ROC and Precision-Recall Curve for the logistic regression classifier of normal and diseased states, corresponding to the no-(NULL) and under-sampling scenarios. The curves were generated based on a balanced holdout set of 1000 observations (500 for each cell outcome), and the models were trained based on the IR=10 using our simulated data. 
+
+
+```{r glm_rocprc}
+index_null <- which(cases$subsampling=="NULL" & cases$metrics=="Accuracy" & cases$ID==3)
+index_best <- which(cases$subsampling=="down" & cases$metrics=="Accuracy" & cases$ID==3)
+
+null_result <- allinone(index_null, dataset, testdata, cases, IR, "glm", 1)
+Best_result <- allinone(index_best, dataset, testdata, cases, IR, "glm", 1)
+null_result$labels <- ifelse(null_result$obs=="diseased", 1, 0)
+Best_result$labels <- ifelse(Best_result$obs=="diseased", 1, 0)
+
+pred0 <- prediction(null_result$diseased, null_result$labels)
+perf0 <- performance(pred0,"tpr","fpr")
+pred1 <- prediction(Best_result$diseased, Best_result$labels)
+perf1 <- performance(pred1,"tpr","fpr")
+
+AUROC0 <- data.frame(OneMinusSpec=perf0@x.values[[1]], Sensitivity=perf0@y.values[[1]], subsampling = 'NULL') 
+AUROC1 <- data.frame(OneMinusSpec=perf1@x.values[[1]], Sensitivity=perf1@y.values[[1]], subsampling = 'UNDER') 
+
+AUROC = rbind(AUROC0, AUROC1)
+
+AUROC %>% ggplot(aes(x=OneMinusSpec, y = Sensitivity, group = subsampling, color = subsampling)) +
+  geom_line(size = 1) +
+  geom_point(size = 1.5) +
+  scale_color_brewer(palette = "Dark2", labels=c(paste0("NULL (AUROC: ", round(Result_glm$AUROC[index_null],2),")"), 
+                                                 paste0("UNDER (AUROC: ", round(Result_glm$AUROC[index_best],2),")"))) +
+  theme_classic() +
+  theme(legend.position = "top") +
+  labs(x = 'FPR (1 - Specificity)', y='TPR (Sensitivity)', title = "(a) ROC Curves") +
+  theme(axis.title = element_text(size = 10), axis.text = element_text(size = 10),
+        strip.text = element_text(size = 10), legend.text=element_text(size = 6),
+        legend.title = element_text(size = 7), plot.title = element_text(hjust = 0.5, size = 10)) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"), aspect.ratio = 1) ->  p_roc
+
+perf2 <- performance(pred0, "prec", "rec")
+perf3 <- performance(pred1, "prec", "rec")
+
+
+AUPRC0 <- data.frame(Recall=perf2@x.values[[1]], Precision=perf2@y.values[[1]], subsampling = 'NULL') 
+AUPRC1 <- data.frame(Recall=perf3@x.values[[1]], Precision=perf3@y.values[[1]], subsampling = 'UNDER') 
+
+AUPRC = rbind(AUPRC0, AUPRC1)
+
+AUPRC %>% ggplot(aes(x=Recall, y = Precision, group = subsampling, color = subsampling)) +
+  geom_line(size = 1) + 
+  geom_point(size = 1.5) + ylim(0,1) + 
+  scale_color_brewer(palette = "Dark2", labels=c(paste0("NULL (AUPRC: ", round(Result_glm$AUPRC[index_null],2),")"), 
+                                                 paste0("UNDER (AUPRC: ", round(Result_glm$AUPRC[index_best],2),")"))) +
+  theme_classic() +
+  theme(legend.position = "top") +
+  labs(x = "TPR (Recall)", y = "Precision", title = "(b) Precision-Recall Curves") +
+  theme(axis.title = element_text(size = 10), axis.text = element_text(size = 10),
+        strip.text = element_text(size = 10), legend.text=element_text(size = 6),
+        legend.title = element_text(size = 7), plot.title = element_text(hjust = 0.5, size = 10)) +
+  theme(plot.margin=unit(c(5.5, 12.5, 5.5, 12.5), "points"), aspect.ratio = 1) -> p_auc
+
+ggpubr::ggarrange(p_roc, p_auc, nrow=1, ncol=2)
+```
+
+---
+
+# Code for Your Own Data
+In this section, we introduce a custom function: modeling() that can be used for your own data. This function includes the following arguments. The code of this function can be found in [custom_functions.R](https://raw.githubusercontent.com/Ying-Ju/subsampling.github.io/main/custom_functions.R){target="_blank"}. 
+
+The modeling() function requires the following arguments:
+
+- trainData: a dataset that is used for training a giving model
+
+- testData: a dataset that is used for testing the performance of the model
+
+- response: a string, name of the binary response variable
+
+- subsampling: subsampling method (it takes one of: "NULL", "down", "up", "smote")
+
+- best_metric: the metric used to evaluate the performance of the model ("Accuracy" or "ROC", "AUC")
+
+- method: either "glm" or "rpart" (logistic regression or decision tree)
+
+- index = 0 (default): returns the performance measures based on the test dataset; index = 1: returns the prediction result based on the test dataset; index = 2: returns both the preformance measures and prediction results based on the test dataset
+
+- seed: random seed (default=2021)
+
+The following code chuck shows how this function can be used using a simple example. case1 returns the performance measures of the model based on the holdout/test dataset. case2 returns the predicted result of the model and case3 return both performance measures and the predicted values. One should note that our response variable in this example is Class. 
+
+```{r yourturn, class.source = 'fold-show'}
+set.seed(2021)
+df1 <- twoClassSim(2000, intercept = -25, linearVars = 20)
+table(df1$Class)
+df2 <- twoClassSim(2000, intercept = -25, linearVars = 20)
+table(df2$Class)
+
+case1 <- modeling(df1, df2, "Class", "down", "Accuracy", "glm")
+print(case1) 
+
+case2 <- modeling(df1, df2, "Class", "down", "Accuracy", "glm", index=1)
+# Below shows the first 6 rows of the predicted values obtained from case2
+print(head(case2))
+
+case3 <- modeling(df1, df2, "Class", "down", "Accuracy", "glm", index=2)
+# Below shows how to extract the output from case3
+print(case3$Performance)
+print(head(case3$Prediction))
+```
+
+The reader should note that while this function generally works well, it does not take care of the high complex data, for example, a predictor contains lots of classes.
+
+---
+
+# Applcation to 58 KEEL Datasets
+In this section, we demonstrate how the strategies we utilized in the previous section for handling the class imbalance problem can be applied to real datasets. More specific, we will use two-class imbalanced datasets from the [KEEL Repository](https://sci2s.ugr.es/keel/imbalanced.php?order=ins#subA){target="_blank"}.
+
+
+## Extracting and Transforming the Datasets
+In this code chunk, we extract the 100 two-class imbalanced datasets from the [KEEL Repository](https://sci2s.ugr.es/keel/imbalanced.php?order=ins#subA){target="_blank"}. The output from this step is a data.frame containing:   
+
+  (a) *dataset*, which captures the name of the dataset,    
+  (b) *imbalance_ratio*, which captures the ratio of the $\frac{\text{majority class}}{\text{minority class}}$, i.e., $\frac{\text{negative class}}{\text{positive class}}$,   
+  (c) *data*, which captures the entire data for each dataset,  
+  (d) *predictors*, which captures the names and values of all the independent variables for each dataset, and   
+  (e) *response*, which captures the values of the response variable for each dataset.   
+  
+Note that the resulting data.frame contains a 100 rows, corresponding to the total number of datasets, and uses the list column structure that facilitates the utilization of the vectorized `purrr::map()` functions within `dplyr::mutate()`.    
+```{r extractData}
+# Extracting the imbalanced datasets from the KEEL Repository
+# ------------------------------------------------------------
+  # [A] Scraping the URLs for the datasets
+  keelURL = "https://sci2s.ugr.es/keel/imbalanced.php?order=ins#subA"
+  kDataLinks = keelURL %>% read_html() %>%
+    html_nodes(" td:nth-child(5) > a") %>% html_attr('href')
+  kDataFullLinks = paste0('https://sci2s.ugr.es/keel/', kDataLinks)
+  
+  # [B] Extracting the dataset names from the links
+  datasetNames = str_match(kDataLinks, "^.+/(.*?).zip") %>% as.data.frame()
+
+  # [C] Extracting the number of attributes
+  numAttributes = keelURL %>% read_html() %>%
+    html_nodes("td.dataDAT > span.bold") %>% html_text()
+  
+  # [D] Number of observations per dataset
+  numObs = keelURL %>% read_html() %>%
+    html_nodes("td:nth-child(3)") %>% html_text()
+  
+  # [E] Imbalance Ratio
+  imbRatio = keelURL %>% read_html() %>%
+    html_nodes("td:nth-child(4)") %>% html_text()
+  
+  # [F] Retaining only the two-class-problem datasets
+  twoClassProbIndex = str_detect(datasetNames$V1, "Than9")
+  kDataFullLinks = kDataFullLinks[twoClassProbIndex]
+  
+  datasetNames = datasetNames[twoClassProbIndex, 2]
+  numAttributes = numAttributes[twoClassProbIndex] %>% as.numeric()
+  numObs = numObs %>% as.numeric() %>% na.omit() %>% .[twoClassProbIndex]
+  imbRatio = imbRatio[twoClassProbIndex] %>% as.numeric()
+  
+  # [G] Meta table for datasets
+  metaTable = data.frame(name = datasetNames, 
+                         number_of_attributes = numAttributes,
+                         number_of_observations = numObs,
+                         imbalance_ratio = imbRatio)
+  
+  # [H] Capitalizing on our custom functions to generate a list of the datasets
+  datasets = keelData(kDataFullLinks, datasetNames, numAttributes,
+                      dest = here::here("Data/imbalancedDatasets")) %>% 
+    enframe(name = "dataset", value = "data") %>% 
+    mutate(predictors = map(.x = data, .f = select, -c(contains("Class" ))),
+           response = map(.x = data, .f = select, contains("Class")) ) %>% 
+    mutate(predictors = map(.x = predictors, .f =tibble),
+           response = map(.x = response, .f = extract2, 1)) %>% 
+    left_join(metaTable,
+              by = c("dataset" = "name") , keep = FALSE) %>% 
+    select(dataset, imbalance_ratio, data, predictors, response)
+  
+  saveRDS(datasets, "Data/results/datasets.rds")
+```
+
+---
+
+## Summary of the datasets used
+First, we dropped the `flare-F` since the number of predictors did not match what was extracted from the table in the [KEEL Repository](https://sci2s.ugr.es/keel/imbalanced.php?order=ins#subA){target="_blank"}, which resulted in an incorrect extraction of the response variable. While we could have fixed this, we chose not to in order to abide by the meta data provided by the [KEEL Repository](https://sci2s.ugr.es/keel/imbalanced.php?order=ins#subA){target="_blank"}.
+
+To provide some data-driven guidance on strategy choice, we examined 58 imbalanced binary classification datasets from the KEEL repository7. Our criteria for selecting these datasets were: the minority class being the "positive" category, having at least 25 observations for the minority class, and the number of predictors provided in the metatable to match those observed in the raw data. We provide an overview for these 58 datasets below, where we have grouped the datasets by their imbalance ratio. The Interquartile Ranges (IQR) are in parentheses.
+
+```{r dataSummary}
+datasets = readRDS("Data/results/datasets.rds") %>% .[-31,] %>% arrange(imbalance_ratio)
+
+X1 = unlist(lapply(datasets$response, function(x) ifelse(table(x)[1]<table(x)[2], 1, 0)))
+X2 = unlist(lapply(datasets$response, function(x) ifelse(table(x)[2]<25, 1, 0)))
+index = which(X1==1|X2==1)
+datasets = datasets[-index,]
+
+table1 = datasets %>% mutate(IR_category=cut(imbalance_ratio, breaks=c(-Inf, 5, 10, 30, Inf), labels=1:4),
+                              nrows = unlist(lapply(response, length)),
+                              ncols = unlist(lapply(predictors, ncol)),
+                              nnum = ldply(lapply(predictors, nvars))[,1],
+                              nfac = ldply(lapply(predictors, nvars))[,2])
+
+table1 = table1 %>% select(IR_category, imbalance_ratio, nrows, ncols, nnum, nfac)
+
+table1$IR_category = as.character(table1$IR_category)
+
+result_table1 = table1 %>% dplyr::group_by(IR_category) %>% dplyr::summarise(
+  n = n(),
+  M_IR = median(imbalance_ratio),
+  IQR_IR = IQR(imbalance_ratio),
+  M_nrows = median(nrows),
+  IQR_nrows = IQR(nrows),
+  M_ncols = median(ncols),
+  IQR_ncols = IQR(ncols),
+  M_nnum = median(nnum),
+  IQR_nnum = IQR(nnum),
+  M_nfac = median(nfac),
+  IQR_nfac = IQR(nfac),
+)
+
+for (i in seq(3,11,2)){
+    result_table1[,i] <- paste0(pull(result_table1, i), " (", pull(result_table1, (i+1)), ")")
+}
+
+result_table1 <- result_table1[, c(1:3, 5, 7, 9, 11)] 
+result_table1$IR_category <- c("[1.82,5]", "(5,10]", "(10, 30]", "(30, 129.44]")
+colnames(result_table1) <- c("Imbalance Ratio (IR) Category", "# Datasets", "Median IR",
+                            "Median # observations", "Median # predictors",  
+                            "Median # numeric predictors", "Median # categorical predictors")
+
+DT::datatable(result_table1)
+
+```
+
+
+## Machine Learning Models
+In the code chunk below, we define four subsampling scenarios (NULL, down, up, smote), two machine learning models (logistic regression and the CART implementation for decision trees), and three model evaluation metrics (accuracy, area under the receiver operating characteristic curve (AUROC), and area under the precision-recall curve (AUPRC)) that will be examined in our experiment. 
+
+```{r modelcases}
+dataset_id = seq(1:nrow(datasets))
+subsampling_methods = c("NULL", "down", "up", "smote")
+best_metrics = c("Accuracy", "AUC", "ROC")
+
+```
+
+---
+
+## Experimentation
+
+In the code chunk below, we run our numerical experiments on 58 datasets (which results in a total of $58 (datasets) \times 4 (subsampling) \times  2 (MLModels) \times 3 (metrics)= 1392$ experiments that we ran. A parallel algorithm will be used to obtain the prediction performance based on the 5 fold cross validation for each dataset.  We report seven common performance metrics that are suited for two class classification problems: accuracy, sensitivity, specificity. AUROC, precision, F1, AUPRC. We use a function `mainfunction()` to conduct this study. This function can be found in the custom_functions.R. In order to compare the performance of different models, we set random seeds in `mainfunction()` so that the same 5 fold samples were used for a given dataset and a subsampling strategy. Thus, our study is reproducible. The result is saved in the file: all_scenarios.RDS. 
+
+```{r experimentROC}
+cases = expand.grid(subsampling=subsampling_methods, metrics = best_metrics, ID=dataset_id,
+                     stringsAsFactors=FALSE)
+
+cl = makeCluster(4, type="SOCK")
+ncases = nrow(cases)
+Result = parSapply(cl, 1:ncases, mainfunction, datasets, cases)
+stopCluster(cl)
+
+All_Result = data.frame()
+
+for (j in 1:ncol(Result)){
+  temp = cbind.data.frame(Result["dataset", j], Result["imbalance_ratio", j],
+                           Result["subsampling", j], Result["metric", j],
+                           Result["method", j], Result["Resample", j],
+                           Result["measure", j], Result["value", j])
+  
+  All_Result = rbind.data.frame(All_Result, temp)
+}
+
+colnames(All_Result) <- rownames(Result)
+
+All_Result$measure <- ifelse(All_Result$measure=="Sensitivity", "Sens", All_Result$measure)
+All_Result$measure <- ifelse(All_Result$measure=="Specificity", "Spec", All_Result$measure)
+All_Result$subsampling <- ifelse(All_Result$subsampling=="DOWN", "UNDER", All_Result$subsampling)
+All_Result$subsampling <- ifelse(All_Result$subsampling=="UP", "OVER", All_Result$subsampling)
+All_Result$metric <- ifelse(All_Result$metric=="AUC", "AUPRC", All_Result$metric)
+All_Result$metric <- ifelse(All_Result$metric=="ROC", "AUROC", All_Result$metric)
+All_Result$subsampling <- factor(All_Result$subsampling, levels=c("NULL", "UNDER", "OVER", "SMOTE"))
+
+saveRDS(All_Result, "all_scenarios.RDS")
+
+```
+
+
+### Visualizing the Results
+
+Below, we visualize the impact of the three general strategies for handling imbalanced datasets (subsampling, metric, and both) on KEEL datasets using the CART implementation for decision trees below. Note that the fig. is animated, changing every 10 seconds.   
+
+```{r visualization, message=FALSE, fig.show='animate', ffmpeg.format='gif', dev='jpeg', interval=10, fig.width = 10, fig.height=10, fig.align='center'}
+
+All_Result = readRDS("all_scenarios.RDS")
+
+All_Result %<>% filter(measure %in% c("Accuracy", "AUPRC", "AUROC", "Sens", "Spec"))
+
+Data <- All_Result%>%filter(method=="CART")%>%group_by(metric, subsampling)
+
+by_dataset <- Data %>% split(.$dataset)
+
+plots <- map2(by_dataset, names(by_dataset),
+  ~ ggplot(.x, aes(measure, value, fill=measure)) + 
+      geom_boxplot() +
+    facet_grid(cols = vars(metric), rows = vars(subsampling)) +
+    theme_bw(base_size = 18)+
+    theme(axis.title = element_text(size = 18), axis.text = element_text(size = 10),
+          strip.text = element_text(size = 18)) + ylim(0, 1) +
+    labs(title = paste0("Data: ", .x$dataset[1], " (IR: ", .x$imbalance_ratio[1], ")") ) +
+    theme(legend.position = 'none', plot.title = element_text(hjust = 0.5, size=18)) + scale_color_npg())
+
+walk(plots, print)
+
+```
+
+
+---
+
+## Hierarchical Regression
+
+In this section, we analysis the result for all scenarios using hierarchical regression. 
+
+
+### Read and preprocess the result data for all scenariIos {.tabset .tabset-fade .tabset-pills}
+
+In the following code chunk, we read the result data for all scenarios and explore the result. 
+
+#### Missing Values {-}
+
+We study the distribution of missing values in the result data.
+
+```{r missingdist}
+All_Result = readRDS("all_scenarios.RDS")
+df1 = All_Result %>% pivot_wider(names_from = measure, values_from = value)
+
+plot_missing(df1)
+```
+
+#### Histograms of Performance Measures {-}
+
+```{r histogram_missing}
+plot_histogram(df1[,c("Accuracy", "Sens", "Spec", "AUROC", "Precision", "F1", "AUPRC")])
+```
+
+
+### Analysis Explanation
+
+We use "hierarchical Regression" for the analysis explanation.  This is a simple technique of entering variables into a regression in blocks so that we can see the "net effect" of the variables on the response.  It is a popular method in explanatory modeling, especially in the behavioral sciences.  In the behavioral sciences, researchers will enter, first the demographics or variables that have not been manipulated, and are outside of the control of the researcher (e.g. gender, race), then they may enter existing variables that are known to effect a response, but are not under study in the current research, then they will enter the newly proposed research variables.  The goal is to show that the newly proposed variables "explain" a large percentage of additional variation.
+
+We believe that this audience is used to seeing explanatory analyses presented in this way.  It is actually fairly informative.  
+
+Here we consider the block of the imbalance ratio category, subsampling and method Main Effects plus the two-way interactions among these variables as the primary study indicates the model evaluation metric is not significant given other variables using these 58 datasets. One should know that this is not necessary true in general since the model performance may depeond on the complexity of a dataset or how well the predictors separate the response classes. 
+
+### Sensitivity Analysis
+
+In the following code chunk, we performed an ANOVA on sensitivity to capture how the imbalance ratio category, subsampling and method and their pairwise interactions impacted the results from all 58 datasets.  
+
+
+```{r block1anova}
+result = All_Result %>% group_by(dataset, imbalance_ratio, subsampling, metric, method, measure) %>% 
+  dplyr::summarise(n = n(), M_value = mean(value, na.rm=T))
+
+result = result %>% mutate(IR_category=cut(imbalance_ratio, breaks=c(-Inf, 5, 10, 30, Inf), labels=1:4))
+
+df2 = result %>% pivot_wider(names_from = measure, values_from = M_value)
+
+complete <- df2 %>% data.frame() %>%
+  select(IR_category, subsampling, method, metric, Sens) 
+
+
+block2sens <- formula(Sens~(IR_category+subsampling+method)^2)
+sensmod2 <- lm(block2sens,data=complete)
+Anova(sensmod2,type="II")
+```
+
+From the above result, we see that the interaction between the imbalance ratio category and subsampling and the interaction between the imbalance ratio and method are significant at the 10% level.  
+
+
+### Main Effects {.tabset .tabset-fade .tabset-pills}
+
+In this section, we study the main effects on sensitivity values. 
+
+#### Main Effect: Imbalance Raito Category {-}
+
+```{r main_IR}
+effect_plot(sensmod2, pred="IR_category") +
+    theme(axis.title = element_text(size=18), axis.text = element_text(size=18)) +
+    ylim(0, 1) +
+    ylab("Sensitivity")+
+    xlab("Imbalance Ratio category")+
+    labs(title = "Main Effect: Imbalance Raito Category") + 
+    theme_bw() +
+    theme(text = element_text(size=18),
+          legend.text = element_text(size=18),
+          legend.direction = "horizontal",
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position="top",
+          plot.title = element_text(hjust = 0.5, size=18)) +
+    scale_x_discrete(limits = c("1", "2", "3", "4"),
+                   labels = c("1.82-5", "5-10", 
+                              "10-30", "30-129.44"))
+```
+
+#### Main Effect: Subsampling {-}
+
+```{r main_subsampling}
+
+effect_plot(sensmod2, pred="subsampling") +
+  theme(axis.title = element_text(size=18), axis.text = element_text(size=18)) +
+  ylim(0, 1) +
+  ylab("Sensitivity")+
+  xlab("Subsampling")+
+  labs(title = "Main Effect: Subsampling") + 
+  theme_bw() +
+  theme(text = element_text(size=18),
+        legend.text = element_text(size=18),
+        legend.direction = "horizontal",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position="top",
+        plot.title = element_text(hjust = 0.5, size=18)) 
+```
+
+#### Main Effect: Method {-}
+
+```{r main_method}
+effect_plot(sensmod2, pred="method") +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size=18)) +
+  ylim(0, 1) +
+  ylab("Sensitivity")+
+  xlab("Method")+
+  theme_bw() +
+  labs(title = "Main Effect: Method") + 
+  theme(text = element_text(size=18),
+        legend.text = element_text(size=18),
+        legend.direction = "horizontal",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position="top",
+        plot.title = element_text(hjust = 0.5, size=18)) 
+
+```
+
+### Interaction Effects {.tabset .tabset-fade .tabset-pills}
+
+In this section, we study the two-way interaction effects on sensitivity values. 
+
+#### IR category and Subsampling {-}
+
+```{r inter1}
+# The Interaction
+Inter.Sens.1 <- effect('IR_category*subsampling', sensmod2, se=TRUE)
+
+# Data Frame
+Inter.Sens.1.DF <- as.data.frame(Inter.Sens.1)
+
+# Create plot
+ggplot(data=Inter.Sens.1.DF, aes(x=IR_category, y=fit, group=subsampling))+
+  geom_line(size=2, aes(color=subsampling))+
+  geom_ribbon(aes(ymin=fit-se, ymax=fit+se,fill=subsampling),alpha=.2)+
+  coord_cartesian(xlim = c(1.25,3.75))+
+  ylab("Sensitivity")+
+  xlab("Imbalance Ratio Category")+
+  labs(title="Imbalance Raito Category and Subsampling as Sensitivity Predictors")+
+  ylim(0,1)+
+  theme_bw(base_size = 18)+
+  theme(text = element_text(size=18),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18),
+    legend.position="top",
+        plot.title = element_text(hjust = 0.5, size=18)) +
+  scale_x_discrete(limits = c("1", "2", "3", "4"),
+                   labels = c("[1.82, 5]", "(5, 10]", 
+                              "(10, 30]", "(30, 129.44]"))
+
+```
+
+#### IR category and Method {-}
+
+
+```{r inter2}
+# The Interaction
+Inter.Sens.2 <- effect('IR_category*method', sensmod2, se=TRUE)
+
+# Data Frame
+Inter.Sens.2.DF <- as.data.frame(Inter.Sens.2)
+
+# Create plot
+ggplot(data=Inter.Sens.2.DF, aes(x=IR_category, y=fit, group=method))+
+  geom_line(size=2, aes(color=method))+
+  geom_ribbon(aes(ymin=fit-se, ymax=fit+se,fill=method), alpha=.2)+
+  coord_cartesian(xlim = c(1.25,3.75))+
+  ylab("Sensitivity")+
+  xlab("Imbalance Ratio Category")+
+  labs(title="Imbalance Raito Category and Method as Sensitivity Predictors")+
+  ylim(0,1)+
+  theme_bw(base_size = 18)+
+  theme(text = element_text(size=18),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18),
+    legend.position="top",
+        plot.title = element_text(hjust = 0.5, size=18)) +
+  scale_x_discrete(limits = c("1", "2", "3", "4"),
+                   labels = c("[1.82, 5]", "(5, 10]", 
+                              "(10, 30]", "(30, 129.44]"))
+```
+
+#### Subsampling and Method {-}
+
+
+```{r inter3}
+# The Interaction
+Inter.Sens.3 <- effect('subsampling*method', sensmod2, se=TRUE)
+
+# Data Frame
+Inter.Sens.3.DF <- as.data.frame(Inter.Sens.3)
+
+# Create plot
+ggplot(data=Inter.Sens.3.DF, aes(x=subsampling, y=fit, group=method))+
+  geom_line(size=2, aes(color=method))+
+  geom_ribbon(aes(ymin=fit-se, ymax=fit+se,fill=method), alpha=.2)+
+  coord_cartesian(xlim = c(1.25,3.75))+
+  ylab("Sensitivity")+
+  xlab("Subsampling")+
+  labs(title="Subsampling and Method as Sensitivity Predictors")+
+  ylim(0,1)+
+  theme_bw(base_size = 18)+
+  theme(text = element_text(size=18),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18),
+    legend.position="top",
+        plot.title = element_text(hjust = 0.5, size=18)) 
+```
+
+---
+
+# Appendix: computational inconsistency regarding AUPRC
+
+In this section, we will go through several R functions that can be used to calculated the area under the precision-recall curve (AUC).
+
+## Simulating the data and fitting a model
+
+First, we simulate the data with two classes.
+
+```{r toyexample}
+set.seed(2021)
+df1 <- twoClassSim(2000, intercept = -25, linearVars = 20)
+table(df1$Class)
+```
+
+We will use the CART implementation for decision trees to develop the model. Here, the area under the precision-recall curve (AUC) is selected as the model evaluation metric and the summary function for the performance measure is **prSummary()**.
+
+
+```{r modeling} 
+fitControl <- trainControl(method = "cv",summaryFunction=prSummary, 
+                           classProbs=T, savePredictions = 'final', verboseIter = F)
+
+df1_fit <- train(Class ~ ., data = df1, method = "rpart", 
+                 metric = "AUC", trControl = fitControl)
+
+```
+
+First, we print some essential outputs.
+
+```{r print_output}
+print(df1_fit$resample)
+```
+
+We can find the AUC value for Fold01 is 0.0559138. In addition, the corresponding precision and recall are 0.9898477 and 0.994898, individually. One should note that this value was calculated by using the R function **PRAUC()** in the R package **MLmetrics**.
+
+## Comparison
+
+For convenience, we will compare the AUC values obtained based on the **Resample==“Fold01”**. The functions that we considered to calculate AUC are listed as follows.
+
+- **PRAUC()** function in the R package *MLmetrics*
+
+- **AUC()** function in the R package `modEvA`
+
+- **AUPRC()** function in the R package `PerfMeas`
+
+- **pr.curve()** function in the R package `PRROC`. This function provides two estimates for AUC: auc.integral (area under the curve computed by integration of the piecewise function) and auc.davis.goadrich (area under the curve according to the interpolation of Davis and Goadrich).
+
+- **pr_auc()** function in the R package `yardstick`
+
+```{r comparison}
+result <- df1_fit$pred %>% filter(Resample=="Fold01")
+AUC0 <- df1_fit$resample %>% filter(Resample=="Fold01") %>% select(AUC)
+
+# MLmetrics
+AUC1 <- PRAUC(y_pred = result$Class1, y_true = ifelse(result$obs == "Class1", 1, 0))
+
+# modEvA
+AUC2 <- modEvA::AUC(obs=ifelse(result$obs == "Class1", 1, 0), pred=result$Class1, curve="PR", plot=FALSE, method = "trapezoid")
+
+# PerfMeas
+
+## computing precision recall values
+res=list(precision.at.all.recall.levels(result$Class1, ifelse(result$obs == "Class1", 1, 0)))
+
+## computing AUPRC
+AUC3 <- AUPRC(res, comp.precision=TRUE);
+
+
+# PRROC
+AUC4 <- pr.curve(result$Class1, weights.class0=ifelse(result$obs == "Class1", 1, 0))
+
+# yardstick
+AUC5 <- pr_auc(result, obs, Class1)
+
+Comparison <- data.frame(package = c("MLmetrics", "(a) modEvA", "(b) PerfMeas", "(c) PRROC(Integral)", "(d) PRROC(Davis&Goadrich)", "(d) yardstick"), AUC_values = c(AUC1, AUC2$AUC, unname(AUC3), AUC4$auc.integral, AUC4$auc.davis.goadrich, AUC5$.estimate))
+
+DT::datatable(Comparison)
+```
+
+While the AUC value obtained from **PRAUC()** function (in MLmetrics) is consistent with the value obtained by (b), We can see that AUC values calculated by (c),(d),(e) seem to agree with each other.
+
+The major difference is that the precision-recall curves created using **PRAUC()** and **AUC()** terminate at the most conservative threshold value for which TPR is minimum, but the precision is defined while the curves created using (c), (d), and (e) contain (0, 1) as the left end point. 
+
+
+---
+# References {-}
